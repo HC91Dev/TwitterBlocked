@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitter Blocklist</title>
+    <style>
+      body {
+        min-width: 200px;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+        background-color: #1a1a1a;
+        color: #fff;
+      }
+
+      h1 {
+        font-size: 24px;
+        color: #fff;
+      }
+
+      p {
+        font-size: 16px;
+        margin-bottom: 20px;
+        color: #ccc;
+      }
+
+      .status {
+        margin-top: 10px;
+        font-size: 14px;
+        padding: 10px;
+        border-radius: 5px;
+      }
+
+      .status.found {
+        background-color: #00796b;
+        color: #fff;
+      }
+
+      .status.not-found {
+        background-color: #c62828;
+        color: #fff;
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto 20px auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Twitter Blocklist</h1>
+
+    <!-- Logo added -->
+    <img src="https://commsrisk.com/wp-content/uploads/2023/01/twitter-ban-block-prohibit.jpg" alt="Twitter Blocklist Logo">
+
+    <p>This extension hides content of blocked users on Twitter.</p>
+
+    <p id="statusMessage" class="status"></p>
+
+    <script>
+      // Example script for future usage
+      console.log('Popup loaded');
+    </script>
+  </body>
+</html>
