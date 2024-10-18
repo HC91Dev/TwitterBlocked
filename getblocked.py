@@ -160,67 +160,77 @@ class TwitterBlocklistScraper(QtWidgets.QWidget):
             self.log_message(f"Error while clicking the 'All' tab: {e}")
             traceback.print_exc()
 
-    async def scroll_to_load_all(self, page):
+    
+    async def scroll_to_load_all(self, page, scroll_done):
         """Scroll the page down programmatically until the scroll height stops increasing."""
         try:
-            self.log_message("Scrolling through blocklist to load all blocked users...")
+            self.log_message("Starting to scroll through the blocklist to load all blocked users...")
 
             previous_height = await page.evaluate('document.body.scrollHeight')
 
             while True:
+                # Scroll down
                 await page.evaluate('window.scrollBy(0, 1000)')
-                await asyncio.sleep(2)
+                await asyncio.sleep(2)  # Allow time for content to load
 
+                # Check the current page height
                 current_height = await page.evaluate('document.body.scrollHeight')
 
                 if current_height == previous_height:
-                    self.log_message("No more content to load. Stopping scroll.")
-                    break
+                    self.log_message("Page height did not change. Attempting one final scroll...")
+
+                    # Perform one more scroll to ensure no content is missed
+                    await page.evaluate('window.scrollBy(0, 1000)')
+                    await asyncio.sleep(2)
+
+                    current_height = await page.evaluate('document.body.scrollHeight')
+                    if current_height == previous_height:
+                        self.log_message("No more content to load. Stopping scrolling.")
+                        break
 
                 previous_height = current_height
 
-            await asyncio.sleep(5)
-            self.log_message("Finished scrolling and waiting for content to load.")
+            # Set the scroll_done flag to True once scrolling is complete
+            scroll_done.set()
+            self.log_message("Finished scrolling through blocklist.")
         except Exception as e:
             self.log_message(f"Error during scrolling: {e}")
             traceback.print_exc()
 
-    async def get_blocked_usernames(self, page):
-        """Count divs with class 'css-175oi2r' and scrape all blocked usernames."""
+
+    async def continuously_capture_usernames(self, page, all_blocked_users, scroll_done):
+        """Continuously capture dynamically loaded blocked usernames while scrolling."""
         try:
-            self.log_message("Counting divs with class 'css-175oi2r'...")
+            self.log_message("Starting continuous capture of blocked usernames...")
 
-            div_count = await page.evaluate('''() => {
-                return document.querySelectorAll('div.css-175oi2r').length;
-            }''')
-
-            self.log_message(f"Found {div_count} divs with class 'css-175oi2r'.")
-
-            if div_count == 0:
-                self.log_message("No divs found with the class 'css-175oi2r'.")
-                return []
-
-            self.log_message("Extracting blocked usernames from the blocklist...")
-            blocked_users = await page.evaluate('''() => {
-                let users = [];
-                document.querySelectorAll('div.css-175oi2r').forEach(div => {
-                    div.querySelectorAll('span').forEach(span => {
-                        const username = span.innerText;
-                        if (username.startsWith('@')) {
+            while not scroll_done.is_set():  # Loop until scrolling is complete
+                # Extract blocked usernames from all span elements that start with '@'
+                new_usernames = await page.evaluate('''() => {
+                    let users = [];
+                    document.querySelectorAll('span').forEach(span => {
+                        const username = span.textContent;
+                        if (username && username.startsWith('@')) {
                             users.push(username);
                         }
                     });
-                });
-                return users;
-            }''')
+                    return users;
+                }''')
 
-            self.log_message(f"Blocked users extracted: {blocked_users}")
-            return blocked_users
+                # Add new usernames to the shared set (set will prevent duplicates)
+                for username in new_usernames:
+                    if username not in all_blocked_users:
+                        all_blocked_users.add(username)
+
+                self.log_message(f"Total unique blocked users so far: {len(all_blocked_users)}")
+
+                await asyncio.sleep(1)  # Keep checking usernames every 1 second
+
+            self.log_message("Stopped capturing usernames as scrolling is complete.")
+
         except Exception as e:
-            self.log_message(f"Error during blocked users extraction: {e}")
+            self.log_message(f"Error during continuous username capture: {e}")
             traceback.print_exc()
-            return []
-    
+
 
     async def get_blocked_users(self, username, password):
         """Scrape the blocked users from the blocklist page and store them as JSON."""
@@ -245,27 +255,37 @@ class TwitterBlocklistScraper(QtWidgets.QWidget):
 
             await self.login(page, username, password)
 
-            # Dismiss the cookie popup after login
-            
-
             self.log_message("Navigating to blocklist page...")
             await page.goto(BLOCKLIST_URL, {'waitUntil': 'networkidle2'})
             await self.dismiss_cookie_popup(page)
             await self.click_all_tab(page)
-            await self.scroll_to_load_all(page)
 
-            blocked_users = await self.get_blocked_usernames(page)
+            # Shared set to collect blocked usernames dynamically
+            all_blocked_users = set()
 
+            # Flag to signal when scrolling is complete
+            scroll_done = asyncio.Event()
+
+            # Create tasks for scrolling and continuous username capture
+            username_task = asyncio.create_task(self.continuously_capture_usernames(page, all_blocked_users, scroll_done))
+            scroll_task = asyncio.create_task(self.scroll_to_load_all(page, scroll_done))
+
+            # Wait for both tasks to complete
+            await asyncio.gather(username_task, scroll_task)
+
+            # Save the blocked users to a JSON file
             with open('blocked_users.json', 'w') as json_file:
-                json.dump(blocked_users, json_file, indent=4)
+                json.dump(list(all_blocked_users), json_file, indent=4)
 
-            self.log_message(f"Finished scraping and saved {len(blocked_users)} blocked users to 'blocked_users.json'.")
+            self.log_message(f"Finished scraping and saved {len(all_blocked_users)} blocked users to 'blocked_users.json'.")
         except Exception as e:
             self.log_message(f"Error during scraping: {e}")
             traceback.print_exc()
         finally:
             if browser:
                 await browser.close()
+
+
 
     def start_scraping(self):
         """Start the scraping process."""

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Blocklist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        h1 {
+            color: #1a1a1a;
+        }
+        p {
+            font-size: 18px;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload Your Blocklist</h1>
+    <p>Select a blocklist JSON file to upload:</p>
+
+    <input type="file" id="uploadFile" accept=".json">
+    <button id="uploadButton">Upload Blocklist</button>
+    <p id="statusMessage"></p>
+
+    <script>
+        document.getElementById('uploadButton').addEventListener('click', function() {
+            const fileInput = document.getElementById('uploadFile');
+            const statusMessage = document.getElementById('statusMessage');
+
+            if (fileInput.files.length === 0) {
+                statusMessage.textContent = 'No file selected';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                try {
+                    const blockedUsers = JSON.parse(event.target.result);
+                    
+                    // Send the blocked users data to the background script
+                    browser.runtime.sendMessage({
+                        action: 'uploadBlockedUsers',
+                        blockedUsers: blockedUsers
+                    }, function(response) {
+                        if (response.success) {
+                            statusMessage.textContent = 'Blocklist uploaded successfully';
+                        } else {
+                            statusMessage.textContent = 'Error uploading blocklist';
+                        }
+                    });
+                } catch (e) {
+                    statusMessage.textContent = 'Invalid JSON file';
+                }
+            };
+
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+</html>
