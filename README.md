@@ -26,8 +26,8 @@ To install the application, follow these steps:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/twitter-blocklist-scraper.git
-   cd twitter-blocklist-scraper
+   git clone https://github.com/HC91Dev/TwitterBlocked.git
+   cd TwitterBlocked
    ```
 
 2. **Create a virtual environment:**
