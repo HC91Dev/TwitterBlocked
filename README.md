@@ -74,7 +74,7 @@ This project includes the following extension files:
 
 - **popup.html**: This file defines the layout and design of the popup interface that appears when the extension icon is clicked. You can customize it to display the scraped data or provide additional functionalities.
 
-- **background.js**: This script runs in the background and handles events such as browser action clicks, managing the extension's lifecycle, and possibly storing data.
+- **background.js**: This script runs in the background and handles events such as browser action clicks, managing the extension's lifecycle, stores your blocked users in localstorage.
 
 ### Using the Extension Files
 
