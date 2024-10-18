@@ -58,7 +58,7 @@ To install the application, follow these steps:
 1. **Run the application:**
 
    ```bash
-   python your_script_name.py
+   python getblocked.py
    ```
 
 2. **Log in with your Twitter username and password.**
