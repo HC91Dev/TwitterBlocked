@@ -11,6 +11,7 @@ A PyQt5 application that allows users to scrape their blocked users from Twitter
 - [Requirements](#requirements)
 - [Contributing](#contributing)
 - [License](#license)
+- [Packaging](#Packaging)
 
 ## Features
 
@@ -111,3 +112,23 @@ If you would like to contribute to this project, please fork the repository and 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Packaging
+
+To package the extension for distribution, follow these instructions:
+
+1. **For Chrome**:
+   - Go to the `chrome://extensions/` page in your Chrome browser.
+   - Make sure "Developer mode" is enabled.
+   - Click on "Pack extension."
+   - In the popup, select the folder where your extension files (including `manifest.json`, `content.js`, `background.js`, `popup.html`,`blocked_users.json`,) are stored.
+   - Once packed, Chrome will create a `.crx` file, which you can distribute and install by dragging it into Chrome's extension page.
+
+2. **For Firefox**:
+   - Firefox requires that extensions be signed before distribution.
+   - Go to `about:debugging` and load your extension as a temporary add-on.
+   - Visit the [Firefox Developer Hub](https://addons.mozilla.org/en-US/developers/) and follow their guidelines to upload your extension for signing.
+   - Once approved, Firefox will provide a signed `.xpi` file, which can be distributed and installed in Firefox.
+
+3. **Cross-browser Packaging**:
+   - Consider using [web-ext](https://github.com/mozilla/web-ext) to package and sign your extension for both Chrome and Firefox easily.
